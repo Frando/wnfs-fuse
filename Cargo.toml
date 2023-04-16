@@ -1,0 +1,35 @@
+[package]
+name = "wnfs-experiments"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.70"
+async-trait = "0.1.68"
+chrono = "0.4.24"
+clap = { version = "4.2.2", features = ["derive"] }
+ed25519-dalek = { version = "2.0.0-rc.2", features = ["serde", "rand_core"] }
+fuser = "0.12.0"
+futures = "0.3.28"
+ipfs-sqlite-block-store = "0.13.0"
+libc = "0.2.141"
+libipld = { version = "0.16.0", features = ["dag-cbor"] }
+multihash = { version = "0.18.1", features = ["blake3"] }
+rand = "0.8"
+serde = "1.0.160"
+serde_ipld_dagcbor = "0.3.0"
+tokio = { version = "1.27.0", features = ["full"] }
+tracing = "0.1.37"
+tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
+wnfs = "0.1.20"
+wnfs-common = "0.1.20"
+wnfs-namefilter = "0.1.20"
+
+[patch.crates-io]
+ipfs-sqlite-block-store = { path = "../ipfs-sqlite-block-store" }
+# serde_ipld_dagcbor = { path = "../serde_ipld_dagcbor" }
+wnfs = { path = "../rs-wnfs/wnfs" }
+wnfs-common = { path = "../rs-wnfs/wnfs-common" }
+wnfs-namefilter = { path = "../rs-wnfs/wnfs-namefilter" }
