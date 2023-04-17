@@ -3,7 +3,7 @@
 
 use clap::{Parser, Subcommand};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use wnfs_experiments::{fs::Fs, fuse};
+use wnfs_experiments::{fs::Wnfs, fuse};
 
 #[derive(Debug, Parser)]
 pub struct Args {
@@ -15,7 +15,7 @@ pub enum Command {
     Mkdir { path: String },
     Cat { path: String },
     Write { path: String },
-    Mount { mountpoint: String }
+    Mount { mountpoint: String },
 }
 
 fn into_segments(path: String) -> Vec<String> {
@@ -24,13 +24,13 @@ fn into_segments(path: String) -> Vec<String> {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    tracing_subscriber::fmt().init();
+    tracing_subscriber::fmt::init();
     let args = Args::parse();
     // Create an in-memory block store.
     // let store = &mut MemoryBlockStore::default();
     let db_path = "blocks.db";
     let fs_name = "demo".to_string();
-    let mut fs = Fs::open_from_path(db_path, fs_name).await?;
+    let mut fs = Wnfs::open_from_path(db_path, fs_name).await?;
 
     match args.command {
         Command::Mkdir { path } => {
@@ -49,7 +49,9 @@ async fn main() -> anyhow::Result<()> {
             tokio::io::stdout().write_all(&buf).await?;
         }
         Command::Mount { mountpoint } => {
-            fuse::mount(mountpoint)?;
+            fuse::mount(fs, mountpoint);
+            // tokio::task::spawn_blocking(|| {
+            // });
         }
     }
     Ok(())

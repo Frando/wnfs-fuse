@@ -2,21 +2,21 @@ use std::{path::Path, rc::Rc};
 
 use chrono::Utc;
 use futures::StreamExt;
-use libipld::{Cid};
+use libipld::Cid;
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
-use wnfs::private::{PrivateDirectory, PrivateForest, RevisionRef};
+use wnfs::private::{PrivateDirectory, PrivateForest, PrivateNode, RevisionRef};
 use wnfs_namefilter::Namefilter;
 
 use crate::SqliteBlockStore;
-use wnfs_common::BlockStore;
+use wnfs_common::{BlockStore, Metadata};
 
-pub struct Fs {
+pub struct Wnfs {
     store: SqliteBlockStore,
     // signing_key: SigningKey,
     name: String,
     forest: Rc<PrivateForest>,
-    private_dir: Rc<PrivateDirectory>, 
+    private_dir: Rc<PrivateDirectory>,
 }
 
 const PRIVATE_ROOT_PREFIX: &str = "private-root:";
@@ -28,7 +28,7 @@ struct PrivateRoot {
     revision_ref: RevisionRef,
 }
 
-impl Fs {
+impl Wnfs {
     pub async fn open_from_path(db_path: impl AsRef<Path>, name: String) -> anyhow::Result<Self> {
         let mut store = SqliteBlockStore::new(db_path)?;
         let private_root_alias = format!("{}{}", PRIVATE_ROOT_PREFIX, name);
@@ -82,7 +82,7 @@ impl Fs {
             .get_multivalue(&private_root.revision_ref, &store)
             .next()
             .await
-            .unwrap()?;
+            .ok_or_else(|| anyhow::anyhow!("Failed to load private forest: {private_forest:?}"))??;
         let private_dir = node
             .search_latest(&private_forest, &store)
             .await?
@@ -165,6 +165,39 @@ impl Fs {
     pub async fn read_file(&self, path_segments: &[String]) -> anyhow::Result<Vec<u8>> {
         self.private_dir
             .read(path_segments, true, &self.forest, &self.store)
+            .await
+    }
+
+    pub async fn read_file_chunk(
+        &self,
+        path_segments: &[String],
+        offset: usize,
+        size: usize,
+    ) -> anyhow::Result<Vec<u8>> {
+        let node = self.get_node(&path_segments).await?;
+        match node {
+            None => Err(anyhow::anyhow!("Not found")),
+            Some(PrivateNode::Dir(_)) => Err(anyhow::anyhow!("Is a directory, not a file")),
+            Some(PrivateNode::File(file)) => {
+                file.read_chunk(offset, size, &self.forest, &self.store)
+                    .await
+            }
+        }
+    }
+
+    pub async fn ls(&self, path_segments: &[String]) -> anyhow::Result<Vec<(String, Metadata)>> {
+        self.private_dir
+            .ls(path_segments, false, &self.forest, &self.store)
+            .await
+    }
+
+    pub fn private_root(&self) -> Rc<PrivateDirectory> {
+        Rc::clone(&self.private_dir)
+    }
+
+    pub async fn get_node(&self, path_segments: &[String]) -> anyhow::Result<Option<PrivateNode>> {
+        self.private_dir
+            .get_node(path_segments, false, &self.forest, &self.store)
             .await
     }
 }
