@@ -11,6 +11,8 @@ use wnfs_namefilter::Namefilter;
 use crate::SqliteBlockStore;
 use wnfs_common::{BlockStore, Metadata};
 
+/// Wrapper around a wnfs PrivateDirectory, PrivateForest and Blockstore.
+/// TODO: Store at least the keys outside of the blockstore.
 pub struct Wnfs {
     store: SqliteBlockStore,
     // signing_key: SigningKey,
@@ -20,7 +22,6 @@ pub struct Wnfs {
 }
 
 const PRIVATE_ROOT_PREFIX: &str = "private-root:";
-// const KEYPAIR_PREFIX: &str = "keypair:";
 
 #[derive(Debug, Serialize, Deserialize)]
 struct PrivateRoot {
@@ -32,28 +33,6 @@ impl Wnfs {
     pub async fn open_from_path(db_path: impl AsRef<Path>, name: String) -> anyhow::Result<Self> {
         let mut store = SqliteBlockStore::new(db_path)?;
         let private_root_alias = format!("{}{}", PRIVATE_ROOT_PREFIX, name);
-        // let keypair_alias = format!("{}{}", KEYPAIR_PREFIX, name);
-        // let signing_key = {
-        //     match store.get_from_alias(&keypair_alias).await? {
-        //         Some(bytes) => {
-        //             let keypair = SigningKey::from_bytes(
-        //                 &bytes
-        //                     .try_into()
-        //                     .map_err(|_| anyhow::anyhow!("Failed to parse keypair"))?,
-        //             );
-        //             keypair
-        //         }
-        //         None => {
-        //             let mut rng = rand::rngs::OsRng;
-        //             let keypair = SigningKey::generate(&mut rng);
-        //             let buf = keypair.to_bytes();
-        //             store
-        //                 .put_with_alias(&keypair_alias, buf.into(), IpldCodec::Raw)
-        //                 .await?;
-        //             keypair
-        //         }
-        //     }
-        // };
         let private_root: PrivateRoot = {
             match store
                 .get_deserializable_from_alias::<PrivateRoot>(&private_root_alias)
@@ -82,7 +61,9 @@ impl Wnfs {
             .get_multivalue(&private_root.revision_ref, &store)
             .next()
             .await
-            .ok_or_else(|| anyhow::anyhow!("Failed to load private forest: {private_forest:?}"))??;
+            .ok_or_else(|| {
+                anyhow::anyhow!("Failed to load private forest: {private_forest:?}")
+            })??;
         let private_dir = node
             .search_latest(&private_forest, &store)
             .await?
