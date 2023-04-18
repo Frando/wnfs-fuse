@@ -174,7 +174,7 @@ impl Filesystem for WnfsFuse {
               reply.error(ENOENT);
               return;
         };
-        let content = block_on(self.wnfs.read_file_chunk(
+        let content = block_on(self.wnfs.read_file_at(
             &path_segments,
             offset as usize,
             size as usize,

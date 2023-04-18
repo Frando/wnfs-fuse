@@ -13,7 +13,7 @@ clap = { version = "4.2.2", features = ["derive"] }
 ed25519-dalek = { version = "2.0.0-rc.2", features = ["serde", "rand_core"] }
 fuser = "0.12.0"
 futures = "0.3.28"
-ipfs-sqlite-block-store = "0.13.0"
+ipfs-sqlite-block-store = { version = "0.13.0", git = "https://github.com/Frando/ipfs-sqlite-block-store.git", branch = "update-ipld" }
 libc = "0.2.141"
 libipld = { version = "0.16.0", features = ["dag-cbor"] }
 multihash = { version = "0.18.1", features = ["blake3"] }
@@ -23,13 +23,12 @@ serde_ipld_dagcbor = "0.3.0"
 tokio = { version = "1.27.0", features = ["full"] }
 tracing = "0.1.37"
 tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
-wnfs = "0.1.20"
-wnfs-common = "0.1.20"
-wnfs-namefilter = "0.1.20"
+wnfs = { version = "0.1.20", git = "https://github.com/Frando/rs-wnfs.git", branch = "fuse" }
+wnfs-common = { version = "0.1.20", git = "https://github.com/Frando/rs-wnfs.git", branch = "fuse" }
+wnfs-namefilter = { version = "0.1.20", git = "https://github.com/Frando/rs-wnfs.git", branch = "fuse" }
 
 [patch.crates-io]
-ipfs-sqlite-block-store = { path = "../ipfs-sqlite-block-store" }
-# serde_ipld_dagcbor = { path = "../serde_ipld_dagcbor" }
-wnfs = { path = "../rs-wnfs/wnfs" }
-wnfs-common = { path = "../rs-wnfs/wnfs-common" }
-wnfs-namefilter = { path = "../rs-wnfs/wnfs-namefilter" }
+# ipfs-sqlite-block-store = { path = "../ipfs-sqlite-block-store" }
+# wnfs = { path = "../rs-wnfs/wnfs" }
+# wnfs-common = { path = "../rs-wnfs/wnfs-common" }
+# wnfs-namefilter = { path = "../rs-wnfs/wnfs-namefilter" }

@@ -149,7 +149,7 @@ impl Wnfs {
             .await
     }
 
-    pub async fn read_file_chunk(
+    pub async fn read_file_at(
         &self,
         path_segments: &[String],
         offset: usize,
@@ -160,7 +160,7 @@ impl Wnfs {
             None => Err(anyhow::anyhow!("Not found")),
             Some(PrivateNode::Dir(_)) => Err(anyhow::anyhow!("Is a directory, not a file")),
             Some(PrivateNode::File(file)) => {
-                file.read_chunk(offset, size, &self.forest, &self.store)
+                file.read_at(offset, size, &self.forest, &self.store)
                     .await
             }
         }
